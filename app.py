@@ -44,8 +44,10 @@ def video_feed():
         image_data = request.json['image']
         image_data = image_data.split(',')[1]  # Supprimer le préfixe de l'URL data:image/jpeg;base64,
         image_data = base64.b64decode(image_data)
-        image = Image.open(io.BytesIO(image_data))
-        frame = np.array(image)
+        
+        # Décoder l'image en utilisant OpenCV
+        nparr = np.frombuffer(image_data, np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         # Convertir l'image en RGB
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
