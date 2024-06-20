@@ -9,6 +9,10 @@ import time
 import warnings
 import joblib
 import os
+import base64
+import io
+from PIL import Image
+
 
 warnings.filterwarnings('ignore', category=UserWarning, module='google.protobuf')
 
@@ -139,7 +143,7 @@ def start_capture():
         print(f"Error in start_capture: {e}")
         return jsonify({'error': str(e)}), 500
     
-    
+
 @app.route('/train_model', methods=['POST'])
 def train_model():
     global trained_model
