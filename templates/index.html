@@ -91,6 +91,14 @@
                 },
                 body: JSON.stringify({ image: imageData })
             })
+            .then(response => response.json())
+            .then(data => {
+                if (data.frame) {
+                    const frame = data.frame;
+                    const imgElement = document.getElementById('video-stream');
+                    imgElement.src = `data:image/jpeg;base64,${frame}`;
+                }
+            })
             .catch(error => console.error('Error sending frame to server:', error));
         }
 

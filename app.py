@@ -54,6 +54,20 @@ def video_feed():
         with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
             results = holistic.process(frame_rgb)
 
+            if results.right_hand_landmarks:
+                mp_drawing.draw_landmarks(
+                    frame, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
+                    mp_drawing.DrawingSpec(color=(80, 22, 10), thickness=2, circle_radius=4),
+                    mp_drawing.DrawingSpec(color=(80, 44, 121), thickness=2, circle_radius=2)
+                )
+
+            if results.left_hand_landmarks:
+                mp_drawing.draw_landmarks(
+                    frame, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
+                    mp_drawing.DrawingSpec(color=(121, 22, 76), thickness=2, circle_radius=4),
+                    mp_drawing.DrawingSpec(color=(121, 44, 250), thickness=2, circle_radius=2)
+                )
+
             if results.right_hand_landmarks or results.left_hand_landmarks:
                 landmarks = []
 
@@ -73,9 +87,12 @@ def video_feed():
                     columns = [f'{i}_{axis}' for i in range(21) for axis in ['x', 'y', 'z']]
                     input_data = pd.DataFrame([landmarks], columns=columns)
                     prediction = trained_model.predict(input_data)[0]
-                    return jsonify({'prediction': prediction})
+                    cv2.putText(frame, f'Prediction: {prediction}', (10, 70),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
-        return jsonify({'success': True})
+        _, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+        return jsonify({'frame': base64.b64encode(frame).decode('utf-8')})
     except Exception as e:
         print(f"Error processing video frame: {e}")
         return jsonify({'error': str(e)}), 500
