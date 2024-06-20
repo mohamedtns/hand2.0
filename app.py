@@ -101,28 +101,45 @@ video_thread.start()
 def index():
     return render_template('index.html')
 
-@app.route('/video_feed')
+@app.route('/video_feed', methods=['POST'])
 def video_feed():
-    return Response(video_thread.run(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    global data, is_capturing, num_samples, samples_captured, current_class, is_predicting, trained_model, capturing_complete
+
+    try:
+        # Récupérer les données de l'image depuis la requête POST
+        image_data = request.json['image']
+        image_data = image_data.split(',')[1]  # Supprimer le préfixe de l'URL data:image/jpeg;base64,
+        image_data = base64.b64decode(image_data)
+        image = Image.open(io.BytesIO(image_data))
+        frame = np.array(image)
+    except Exception as e:
+        print(f"Error processing video frame: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/start_capture', methods=['POST'])
 def start_capture():
     global is_capturing, current_class, num_samples, samples_captured, data, capturing_complete
 
-    capture_info = request.get_json()
-    num_samples = int(capture_info['num_samples'])
-    class_names = capture_info['class_names']
+    try:
+        capture_info = request.get_json()
+        num_samples = int(capture_info['num_samples'])
+        class_names = capture_info['class_names']
 
-    for class_name in class_names:
-        current_class = class_name
-        samples_captured = 0
-        is_capturing = True
-        while samples_captured < num_samples:
-            time.sleep(0.1)
-        is_capturing = False
+        for class_name in class_names:
+            current_class = class_name
+            samples_captured = 0
+            is_capturing = True
+            while samples_captured < num_samples:
+                time.sleep(0.1)
+            is_capturing = False
 
-    return jsonify({'message': 'Capture completed.', 'success': True})
-
+        return jsonify({'message': 'Capture completed.', 'success': True})
+    except Exception as e:
+        print(f"Error in start_capture: {e}")
+        return jsonify({'error': str(e)}), 500
+    
+    
 @app.route('/train_model', methods=['POST'])
 def train_model():
     global trained_model
